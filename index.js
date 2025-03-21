@@ -9,7 +9,8 @@ async function fetchUSDCPools() {
     // Fetch Orca pools
     console.log('Fetching Orca pools...');
     const orcaResponse = await axios.get('https://api.orca.so/pools');
-    console.log('Orca response:', orcaResponse.data.length, 'pools found');
+    console.log('Orca response: ', orcaResponse.data.length, 'pools found');
+    console.log('Sample Orca pool:', JSON.stringify(orcaResponse.data[0])); // Log first pool
     const orcaPools = (orcaResponse.data || [])
       .filter(pool => {
         const isUSDCPool = (pool?.tokenA?.mint === USDC_MINT) || (pool?.tokenB?.mint === USDC_MINT);
@@ -22,7 +23,8 @@ async function fetchUSDCPools() {
         source: 'Orca'
       }));
 
-    // Fetch Raydium pools
+    // Skip Raydium for now due to 404
+    /*
     console.log('Fetching Raydium pools...');
     const raydiumResponse = await axios.get('https://api.raydium.io/v2/amm/pools');
     console.log('Raydium response:', raydiumResponse.data.length, 'pools found');
@@ -37,8 +39,9 @@ async function fetchUSDCPools() {
         liquidity: pool?.liquidity || 0,
         source: 'Raydium'
       }));
+    */
 
-    const allPools = [...orcaPools, ...raydiumPools];
+    const allPools = [...orcaPools /*, ...raydiumPools*/];
     console.log('Total USDC pools:', allPools.length);
     return allPools;
   } catch (error) {
