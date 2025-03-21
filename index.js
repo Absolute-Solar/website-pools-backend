@@ -1,12 +1,9 @@
 const axios = require('axios');
 const express = require('express');
-const cors = require('cors'); // Add this
+const cors = require('cors');
 const app = express();
 
-// Enable CORS for all origins (or specify your Webflow domain)
-app.use(cors()); // Allows all origins, e.g., '*'
-
-const USDC_MINT = 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v';
+app.use(cors());
 
 async function fetchUSDCPools() {
   try {
@@ -15,16 +12,8 @@ async function fetchUSDCPools() {
     console.log('Orca response: ', orcaResponse.data.length, 'pools found');
     console.log('Sample Orca pool:', JSON.stringify(orcaResponse.data[0]));
     const orcaPools = (orcaResponse.data || [])
-      .filter(pool => {
-        const isUSDCPool = pool?.name?.includes('USDC');
-        if (isUSDCPool) console.log('Orca USDC pool:', pool.name);
-        return isUSDCPool;
-      })
-      .map(pool => ({
-        pair: pool?.name || 'Unknown/Unknown',
-        liquidity: pool?.liquidity || 0,
-        source: 'Orca'
-      }));
+      .filter(pool => pool?.name?.includes('USDC'))
+      .map(pool => ({ ...pool, source: 'Orca' })); // Spread all pool fields and add source
 
     const allPools = [...orcaPools];
     console.log('Total USDC pools:', allPools.length);
