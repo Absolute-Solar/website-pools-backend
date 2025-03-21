@@ -38,3 +38,4 @@ app.get('/api/usdc-pools', async (req, res) => {
 });
 
 module.exports = app; // Export the app for Vercel to use
+app.listen(3000, () => console.log('Server running'));
