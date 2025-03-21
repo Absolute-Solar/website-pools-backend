@@ -1,48 +1,32 @@
 const axios = require('axios');
 const express = require('express');
+const cors = require('cors'); // Add this
 const app = express();
+
+// Enable CORS for all origins (or specify your Webflow domain)
+app.use(cors()); // Allows all origins, e.g., '*'
 
 const USDC_MINT = 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v';
 
 async function fetchUSDCPools() {
   try {
-    // Fetch Orca pools
     console.log('Fetching Orca pools...');
     const orcaResponse = await axios.get('https://api.orca.so/pools');
     console.log('Orca response: ', orcaResponse.data.length, 'pools found');
-    console.log('Sample Orca pool:', JSON.stringify(orcaResponse.data[0])); // Log first pool
+    console.log('Sample Orca pool:', JSON.stringify(orcaResponse.data[0]));
     const orcaPools = (orcaResponse.data || [])
       .filter(pool => {
-        // Check if 'USDC' is in the pool name
         const isUSDCPool = pool?.name?.includes('USDC');
         if (isUSDCPool) console.log('Orca USDC pool:', pool.name);
         return isUSDCPool;
       })
       .map(pool => ({
-        pair: pool?.name || 'Unknown/Unknown', // Use name directly as pair
+        pair: pool?.name || 'Unknown/Unknown',
         liquidity: pool?.liquidity || 0,
         source: 'Orca'
       }));
 
-    // Skip Raydium for now due to 404
-    /*
-    console.log('Fetching Raydium pools...');
-    const raydiumResponse = await axios.get('https://api.raydium.io/v2/amm/pools');
-    console.log('Raydium response:', raydiumResponse.data.length, 'pools found');
-    const raydiumPools = (raydiumResponse.data || [])
-      .filter(pool => {
-        const isUSDCPool = (pool?.baseMint === USDC_MINT) || (pool?.quoteMint === USDC_MINT);
-        if (isUSDCPool) console.log('Raydium USDC pool:', pool?.baseSymbol, pool?.quoteSymbol);
-        return isUSDCPool;
-      })
-      .map(pool => ({
-        pair: `${pool?.baseSymbol || pool?.baseMint || 'Unknown'}/${pool?.quoteSymbol || pool?.quoteMint || 'Unknown'}`,
-        liquidity: pool?.liquidity || 0,
-        source: 'Raydium'
-      }));
-    */
-
-    const allPools = [...orcaPools /*, ...raydiumPools*/];
+    const allPools = [...orcaPools];
     console.log('Total USDC pools:', allPools.length);
     return allPools;
   } catch (error) {
