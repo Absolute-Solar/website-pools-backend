@@ -13,12 +13,13 @@ async function fetchUSDCPools() {
     console.log('Sample Orca pool:', JSON.stringify(orcaResponse.data[0])); // Log first pool
     const orcaPools = (orcaResponse.data || [])
       .filter(pool => {
-        const isUSDCPool = (pool?.tokenA?.mint === USDC_MINT) || (pool?.tokenB?.mint === USDC_MINT);
-        if (isUSDCPool) console.log('Orca USDC pool:', pool?.tokenA?.symbol, pool?.tokenB?.symbol);
+        // Check if 'USDC' is in the pool name
+        const isUSDCPool = pool?.name?.includes('USDC');
+        if (isUSDCPool) console.log('Orca USDC pool:', pool.name);
         return isUSDCPool;
       })
       .map(pool => ({
-        pair: `${pool?.tokenA?.symbol || 'Unknown'}/${pool?.tokenB?.symbol || 'Unknown'}`,
+        pair: pool?.name || 'Unknown/Unknown', // Use name directly as pair
         liquidity: pool?.liquidity || 0,
         source: 'Orca'
       }));
