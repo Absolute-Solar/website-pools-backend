@@ -41,8 +41,8 @@ async function fetchUSDCPools() {
         return {
           ...pool,
           source: 'Orca',
-          token0Icon: tokenMetadata[token0Mint]?.logoURI || 'https://via.placeholder.com/24', // Fallback image
-          token1Icon: tokenMetadata[token1Mint]?.logoURI || 'https://via.placeholder.com/24',
+          token0Icon: tokenMetadata[token0Mint]?.logoURI || 'https://yellow-negative-parrotfish-381.mypinata.cloud/ipfs/bafkreicnzpaug4uuvlcehputfus4slesveg4a6gx7y6ehafvqzvp5j2z44', // Fallback image
+          token1Icon: tokenMetadata[token1Mint]?.logoURI || 'https://yellow-negative-parrotfish-381.mypinata.cloud/ipfs/bafkreicnzpaug4uuvlcehputfus4slesveg4a6gx7y6ehafvqzvp5j2z44',
           token0Symbol: tokenMetadata[token0Mint]?.symbol || 'Unknown',
           token1Symbol: tokenMetadata[token1Mint]?.symbol || 'Unknown'
         };
