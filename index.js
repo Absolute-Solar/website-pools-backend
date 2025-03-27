@@ -5,19 +5,20 @@ const app = express();
 
 app.use(cors());
 
+// Fetch token metadata from Solana token list
 async function fetchTokenMetadata() {
   try {
     const response = await axios.get('https://raw.githubusercontent.com/solana-labs/token-list/main/src/tokens/solana.tokenlist.json');
-    const tokenMap = response.data.tokens.reduce((acc, token) => {
-      acc[token.address] = {
-        logoURI: token.logoURI,
-        symbol: token.symbol
+    const tokenMap = {};
+    response.data.tokens.forEach(token => {
+      tokenMap[token.symbol] = {
+        mint: token.address,
+        logoURI: token.logoURI
       };
-      return acc;
-    }, {});
+    });
     console.log('Token metadata sample:', {
-      USDC: tokenMap['EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v'],
-      SOL: tokenMap['So11111111111111111111111111111111111111112']
+      USDC: tokenMap['USDC'],
+      SOL: tokenMap['SOL']
     });
     return tokenMap;
   } catch (error) {
@@ -26,36 +27,53 @@ async function fetchTokenMetadata() {
   }
 }
 
+// Fetch USDC pools from Orca API
 async function fetchUSDCPools() {
   try {
     console.log('Fetching Orca pools...');
     const orcaResponse = await axios.get('https://api.orca.so/pools');
     const tokenMetadata = await fetchTokenMetadata();
 
-    console.log('Orca response: ', orcaResponse.data.length, 'pools found');
+    console.log('Orca response:', orcaResponse.data.length, 'pools found');
     console.log('Sample Orca pool:', JSON.stringify(orcaResponse.data[0]));
 
     const orcaPools = (orcaResponse.data || [])
-      .filter(pool => pool?.name?.includes('USDC'))
+      .filter(pool => pool?.name?.includes('USDC')) // Filter for USDC pools
       .map(pool => {
-        const token0Mint = pool.tokenA?.mint; // Adjust if field is different
-        const token1Mint = pool.tokenB?.mint; // Adjust if field is different
+        // Split the name to get token symbols (e.g., "SOL/USDC" -> ["SOL", "USDC"])
+        const [token0Symbol, token1Symbol] = pool.name.split('/');
 
-        console.log('Pool mints:', {
+        // Look up metadata for each token symbol
+        const token0Data = tokenMetadata[token0Symbol] || {
+          mint: 'unknown',
+          logoURI: 'https://example.com/fallback.png' // Replace with your fallback image URL
+        };
+        const token1Data = tokenMetadata[token1Symbol] || {
+          mint: 'unknown',
+          logoURI: 'https://example.com/fallback.png' // Replace with your fallback image URL
+        };
+
+        // Log for debugging
+        console.log('Pool tokens:', {
           name: pool.name,
-          token0Mint,
-          token1Mint,
-          token0Icon: tokenMetadata[token0Mint]?.logoURI,
-          token1Icon: tokenMetadata[token1Mint]?.logoURI
+          token0Symbol,
+          token1Symbol,
+          token0Mint: token0Data.mint,
+          token1Mint: token1Data.mint,
+          token0Icon: token0Data.logoURI,
+          token1Icon: token1Data.logoURI
         });
 
+        // Return pool data with added token info
         return {
           ...pool,
           source: 'Orca',
-          token0Icon: tokenMetadata[token0Mint]?.logoURI || 'https://yellow-negative-parrotfish-381.mypinata.cloud/ipfs/bafkreicnzpaug4uuvlcehputfus4slesveg4a6gx7y6ehafvqzvp5j2z44',
-          token1Icon: tokenMetadata[token1Mint]?.logoURI || 'https://yellow-negative-parrotfish-381.mypinata.cloud/ipfs/bafkreicnzpaug4uuvlcehputfus4slesveg4a6gx7y6ehafvqzvp5j2z44',
-          token0Symbol: tokenMetadata[token0Mint]?.symbol || 'Unknown',
-          token1Symbol: tokenMetadata[token1Mint]?.symbol || 'Unknown'
+          token0Icon: token0Data.logoURI,
+          token1Icon: token1Data.logoURI,
+          token0Symbol,
+          token1Symbol,
+          token0Mint: token0Data.mint,
+          token1Mint: token1Data.mint
         };
       });
 
@@ -67,6 +85,7 @@ async function fetchUSDCPools() {
   }
 }
 
+// API endpoint
 app.get('/api/usdc-pools', async (req, res) => {
   const pools = await fetchUSDCPools();
   if (pools.length === 0) {
