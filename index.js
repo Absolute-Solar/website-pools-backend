@@ -32,39 +32,29 @@ async function fetchUSDCPools() {
   try {
     console.log('Fetching Orca pools...');
     const orcaResponse = await axios.get('https://api.orca.so/pools');
-    const tokenMetadata = await fetchTokenMetadata();
-
-    console.log('Orca response:', orcaResponse.data.length, 'pools found');
-    console.log('Sample Orca pool:', JSON.stringify(orcaResponse.data[0]));
+    const tokenMetadata = await fetchTokenMetadata(); // Assume this fetches the Solana token list
 
     const orcaPools = (orcaResponse.data || [])
       .filter(pool => pool?.name?.includes('USDC')) // Filter for USDC pools
       .map(pool => {
-        // Split the name to get token symbols (e.g., "SOL/USDC" -> ["SOL", "USDC"])
-        const [token0Symbol, token1Symbol] = pool.name.split('/');
+        // Split the name by '/' to get the token parts
+        const [token0Part, token1Part] = pool.name.split('/');
 
-        // Look up metadata for each token symbol
+        // Clean the token symbols by removing text within square brackets
+        const token0Symbol = token0Part.replace(/\[.*\]/, '').trim();
+        const token1Symbol = token1Part.replace(/\[.*\]/, '').trim();
+
+        // Look up metadata for each cleaned token symbol
         const token0Data = tokenMetadata[token0Symbol] || {
           mint: 'unknown',
-          logoURI: 'https://example.com/fallback.png' // Replace with your fallback image URL
+          logoURI: 'https://example.com/fallback.png' // Use your fallback image URL
         };
         const token1Data = tokenMetadata[token1Symbol] || {
           mint: 'unknown',
-          logoURI: 'https://example.com/fallback.png' // Replace with your fallback image URL
+          logoURI: 'https://example.com/fallback.png' // Use your fallback image URL
         };
 
-        // Log for debugging
-        console.log('Pool tokens:', {
-          name: pool.name,
-          token0Symbol,
-          token1Symbol,
-          token0Mint: token0Data.mint,
-          token1Mint: token1Data.mint,
-          token0Icon: token0Data.logoURI,
-          token1Icon: token1Data.logoURI
-        });
-
-        // Return pool data with added token info
+        // Return pool data with token info
         return {
           ...pool,
           source: 'Orca',
@@ -80,7 +70,7 @@ async function fetchUSDCPools() {
     console.log('Total USDC pools:', orcaPools.length);
     return orcaPools;
   } catch (error) {
-    console.error('Error fetching pools:', error.message, error.response?.status);
+    console.error('Error fetching pools:', error.message);
     return [];
   }
 }
