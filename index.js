@@ -5,17 +5,21 @@ const app = express();
 
 app.use(cors());
 
-// Fetch token list for metadata (you could cache this)
 async function fetchTokenMetadata() {
   try {
     const response = await axios.get('https://raw.githubusercontent.com/solana-labs/token-list/main/src/tokens/solana.tokenlist.json');
-    return response.data.tokens.reduce((acc, token) => {
+    const tokenMap = response.data.tokens.reduce((acc, token) => {
       acc[token.address] = {
         logoURI: token.logoURI,
         symbol: token.symbol
       };
       return acc;
     }, {});
+    console.log('Token metadata sample:', {
+      USDC: tokenMap['EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v'],
+      SOL: tokenMap['So11111111111111111111111111111111111111112']
+    });
+    return tokenMap;
   } catch (error) {
     console.error('Error fetching token metadata:', error.message);
     return {};
@@ -34,14 +38,21 @@ async function fetchUSDCPools() {
     const orcaPools = (orcaResponse.data || [])
       .filter(pool => pool?.name?.includes('USDC'))
       .map(pool => {
-        // Extract token mints from pool data (adjust based on actual Orca API response structure)
-        const token0Mint = pool.tokenA?.mint || pool.mintA;
-        const token1Mint = pool.tokenB?.mint || pool.mintB;
+        const token0Mint = pool.tokenA?.mint; // Adjust if field is different
+        const token1Mint = pool.tokenB?.mint; // Adjust if field is different
+
+        console.log('Pool mints:', {
+          name: pool.name,
+          token0Mint,
+          token1Mint,
+          token0Icon: tokenMetadata[token0Mint]?.logoURI,
+          token1Icon: tokenMetadata[token1Mint]?.logoURI
+        });
 
         return {
           ...pool,
           source: 'Orca',
-          token0Icon: tokenMetadata[token0Mint]?.logoURI || 'https://yellow-negative-parrotfish-381.mypinata.cloud/ipfs/bafkreicnzpaug4uuvlcehputfus4slesveg4a6gx7y6ehafvqzvp5j2z44', // Fallback image
+          token0Icon: tokenMetadata[token0Mint]?.logoURI || 'https://yellow-negative-parrotfish-381.mypinata.cloud/ipfs/bafkreicnzpaug4uuvlcehputfus4slesveg4a6gx7y6ehafvqzvp5j2z44',
           token1Icon: tokenMetadata[token1Mint]?.logoURI || 'https://yellow-negative-parrotfish-381.mypinata.cloud/ipfs/bafkreicnzpaug4uuvlcehputfus4slesveg4a6gx7y6ehafvqzvp5j2z44',
           token0Symbol: tokenMetadata[token0Mint]?.symbol || 'Unknown',
           token1Symbol: tokenMetadata[token1Mint]?.symbol || 'Unknown'
