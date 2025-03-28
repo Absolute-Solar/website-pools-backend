@@ -9,6 +9,9 @@
   "routes": [
     {
       "src": "/api/usdc-pools",
+      "dest": "index.js"
+    },
+    {
       "src": "/api/raydium-usdc-pools",
       "dest": "index.js"
     }
