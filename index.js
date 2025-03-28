@@ -5,6 +5,12 @@ const app = express();
 
 app.use(cors());
 
+const corsOptions = {
+  origin: 'https://3rdtest.webflow.io', // Your Webflow domain
+  optionsSuccessStatus: 200
+};
+app.use(cors(corsOptions));
+
 // Fetch token metadata including mint addresses
 async function fetchTokenMetadata() {
   try {
