@@ -8,11 +8,7 @@
   ],
   "routes": [
     {
-      "src": "/api/usdc-pools",
-      "dest": "index.js"
-    },
-    {
-      "src": "/api/raydium-usdc-pools",
+      "src": "/api/(.*)",
       "dest": "index.js"
     }
   ]
