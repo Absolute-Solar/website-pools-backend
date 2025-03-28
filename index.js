@@ -95,9 +95,10 @@ async function fetchRaydiumUSDCPools() {
     const allPools = raydiumResponse.data.official || raydiumResponse.data; // Adjust based on API response structure
     const usdcMint = 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v'; // USDC mint address on Solana
 
+    // Filter for USDC pools and limit to the first 3
     const raydiumPools = allPools
-      .filter(pool => pool.baseMint === usdcMint || pool.quoteMint === usdcMint) // Filter for USDC pools
-      .slice(0, 3) // Limit to the first 3 pools
+      .filter(pool => pool.baseMint === usdcMint || pool.quoteMint === usdcMint)
+      .slice(0, 3) // Take only the first 3 pools
       .map(pool => {
         const baseToken = tokenMetadata[pool.baseMint] || {
           symbol: 'Unknown',
@@ -133,7 +134,6 @@ async function fetchRaydiumUSDCPools() {
     return [];
   }
 }
-
 // API endpoint for Orca USDC pools
 app.get('/api/usdc-pools', async (req, res) => {
   try {
