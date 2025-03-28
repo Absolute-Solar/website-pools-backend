@@ -28,8 +28,8 @@ async function fetchTokenMetadata() {
   }
 }
 
-// Fetch USDC pools and add tradeUrl
-async function fetchUSDCPools() {
+// Fetch Orca USDC pools and add tradeUrl
+async function fetchOrcaUSDCPools() {
   try {
     console.log('Fetching Orca pools...');
     const orcaResponse = await axios.get('https://api.orca.so/pools');
@@ -72,19 +72,77 @@ async function fetchUSDCPools() {
         };
       });
 
-    console.log('Total USDC pools:', orcaPools.length);
+    console.log('Total Orca USDC pools:', orcaPools.length);
     return orcaPools;
   } catch (error) {
-    console.error('Error fetching pools:', error.message, error.response?.status);
+    console.error('Error fetching Orca pools:', error.message, error.response?.status);
     return [];
   }
 }
 
-// API endpoint to serve pool data
+// Fetch Raydium USDC pools and add tradeUrl
+async function fetchRaydiumUSDCPools() {
+  try {
+    console.log('Fetching Raydium pools...');
+    const raydiumResponse = await axios.get('https://api.raydium.io/v2/sdk/liquidity/mainnet.json');
+    const tokenMetadata = await fetchTokenMetadata();
+
+    const allPools = raydiumResponse.data.official || raydiumResponse.data; // Adjust based on API response structure
+    const usdcMint = 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v'; // USDC mint address on Solana
+
+    const raydiumPools = allPools
+      .filter(pool => pool.baseMint === usdcMint || pool.quoteMint === usdcMint)
+      .map(pool => {
+        const baseToken = tokenMetadata[pool.baseMint] || {
+          symbol: 'Unknown',
+          logoURI: 'https://your-fallback-image-url.com/fallback.png',
+          mint: pool.baseMint
+        };
+        const quoteToken = tokenMetadata[pool.quoteMint] || {
+          symbol: 'Unknown',
+          logoURI: 'https://your-fallback-image-url.com/fallback.png',
+          mint: pool.quoteMint
+        };
+
+        // Construct the Raydium trade URL using mint addresses
+        const tradeUrl = `https://raydium.io/swap/?inputMint=${pool.baseMint}&outputMint=${pool.quoteMint}`;
+
+        return {
+          name: `${baseToken.symbol}/${quoteToken.symbol}`,
+          token0Mint: pool.baseMint,
+          token1Mint: pool.quoteMint,
+          token0Icon: baseToken.logoURI,
+          token1Icon: quoteToken.logoURI,
+          liquidity: pool.liquidity || 'N/A',
+          price: pool.price || 'N/A',
+          source: 'Raydium',
+          tradeUrl
+        };
+      });
+
+    console.log('Total Raydium USDC pools:', raydiumPools.length);
+    return raydiumPools;
+  } catch (error) {
+    console.error('Error fetching Raydium pools:', error.message, error.response?.status);
+    return [];
+  }
+}
+
+// API endpoint for Orca USDC pools
 app.get('/api/usdc-pools', async (req, res) => {
-  const pools = await fetchUSDCPools();
+  const pools = await fetchOrcaUSDCPools();
   if (pools.length === 0) {
-    res.json({ message: 'No USDC pools found', data: [] });
+    res.json({ message: 'No Orca USDC pools found', data: [] });
+  } else {
+    res.json(pools);
+  }
+});
+
+// API endpoint for Raydium USDC pools
+app.get('/api/raydium-usdc-pools', async (req, res) => {
+  const pools = await fetchRaydiumUSDCPools();
+  if (pools.length === 0) {
+    res.json({ message: 'No Raydium USDC pools found', data: [] });
   } else {
     res.json(pools);
   }
