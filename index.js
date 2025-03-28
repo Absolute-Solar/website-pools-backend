@@ -96,7 +96,8 @@ async function fetchRaydiumUSDCPools() {
     const usdcMint = 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v'; // USDC mint address on Solana
 
     const raydiumPools = allPools
-      .filter(pool => pool.baseMint === usdcMint || pool.quoteMint === usdcMint)
+      .filter(pool => pool.baseMint === usdcMint || pool.quoteMint === usdcMint) // Filter for USDC pools
+      .slice(0, 3) // Limit to the first 3 pools
       .map(pool => {
         const baseToken = tokenMetadata[pool.baseMint] || {
           symbol: 'Unknown',
@@ -125,7 +126,7 @@ async function fetchRaydiumUSDCPools() {
         };
       });
 
-    console.log('Total Raydium USDC pools:', raydiumPools.length);
+    console.log('Total Raydium USDC pools fetched:', raydiumPools.length);
     return raydiumPools;
   } catch (error) {
     console.error('Error fetching Raydium pools:', error.message, error.response?.status);
