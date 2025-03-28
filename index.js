@@ -3,11 +3,10 @@ const express = require('express');
 const cors = require('cors');
 const app = express();
 
-app.use(cors());
-
+// Configure CORS to allow requests from your Webflow domain
 const corsOptions = {
-  origin: 'https://3rdtest.webflow.io', // Your Webflow domain
-  optionsSuccessStatus: 200
+  origin: 'https://3rdtest.webflow.io', // Explicitly allow your Webflow domain
+  optionsSuccessStatus: 200 // Ensure preflight OPTIONS requests succeed
 };
 app.use(cors(corsOptions));
 
@@ -136,22 +135,37 @@ async function fetchRaydiumUSDCPools() {
 
 // API endpoint for Orca USDC pools
 app.get('/api/usdc-pools', async (req, res) => {
-  const pools = await fetchOrcaUSDCPools();
-  if (pools.length === 0) {
-    res.json({ message: 'No Orca USDC pools found', data: [] });
-  } else {
-    res.json(pools);
+  try {
+    const pools = await fetchOrcaUSDCPools();
+    if (pools.length === 0) {
+      res.json({ message: 'No Orca USDC pools found', data: [] });
+    } else {
+      res.json(pools);
+    }
+  } catch (error) {
+    console.error('Error in /api/usdc-pools:', error.message);
+    res.status(500).json({ message: 'Server error' });
   }
 });
 
 // API endpoint for Raydium USDC pools
 app.get('/api/raydium-usdc-pools', async (req, res) => {
-  const pools = await fetchRaydiumUSDCPools();
-  if (pools.length === 0) {
-    res.json({ message: 'No Raydium USDC pools found', data: [] });
-  } else {
-    res.json(pools);
+  try {
+    const pools = await fetchRaydiumUSDCPools();
+    if (pools.length === 0) {
+      res.json({ message: 'No Raydium USDC pools found', data: [] });
+    } else {
+      res.json(pools);
+    }
+  } catch (error) {
+    console.error('Error in /api/raydium-usdc-pools:', error.message);
+    res.status(500).json({ message: 'Server error' });
   }
+});
+
+// Optional: Add a catch-all for 404s to ensure CORS headers are included
+app.use((req, res) => {
+  res.status(404).json({ message: 'Route not found' });
 });
 
 module.exports = app;
